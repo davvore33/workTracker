@@ -1,0 +1,16 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Example user template template
+### Example user template
+
+# IntelliJ project files
+.idea
+out
+gen
+credentials/
+src/__pycache__/
+src/bill.md
+src/datasheet.csv
+db/calendar.db
+src/dbAccess/sqlite_test.py
+db/*
+src/dbAccess/__pycache__/
