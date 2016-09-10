@@ -31,6 +31,8 @@ def main():
     dbPopulation(cal,db)
     fileCreation(db)
 
+    db.drop()
+
 
 def dbPopulation(cal,db):
     events = cal.getObj()
@@ -52,6 +54,5 @@ def fileCreation(db):
         tex.compiling()
     except Exception as E:
         logging.error("Error {} while writing {} tex file".format(E, tex))
-
 if __name__ == '__main__':
     main()

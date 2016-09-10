@@ -61,3 +61,6 @@ class calendarDb(Database):
 
     def searchEvent(self, where):
         return super().get(table=self.tablename, where=where)
+
+    def drop(self):
+        super.drop(self.tablename)

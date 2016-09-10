@@ -101,6 +101,13 @@ class Database:
         sql = 'UPDATE {} {} {};'.format(table, set_sql, where_sql)
         cur.execute(sql, row)
 
+    def drop(self, table):
+        conn = self.get_connection()
+        cur = conn.cursor()
+        cur.execute("DROP TABLE {}".format(table))
+        return cur.fetchall()
+
+
     @staticmethod
     def parse_where(where=None):
         '''
