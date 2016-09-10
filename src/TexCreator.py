@@ -1,3 +1,5 @@
+import logging
+
 from docutils import core, io
 
 import os
@@ -15,18 +17,24 @@ class texCreator:
         configPath = configPath + "/Configuration.ini"
 
         self.config(configPath)
-        self.leggi()
+        try:
+            self.read()
+        except Exception as E:
+            logging.error("Error {} reading {}".format(self.name, E))
 
+    def write(self, args):
+        self.tex[0].format(args[0])
 
-    def leggi(self):
+    def read(self):
         with  open(self.path+"/"+self.name,'r') as texfile:
             rawTex = texfile.read()
-
-            self.tex
-            os.execl(self.cmdPDF, self.path+"/"+self.name)
+            self.tex = rawTex.split("\n")
+    
+    def compiling(self):
+        os.execl(self.cmdPDF, self.path+"/"+self.name)
         
     def config(self,configPath):
-        data = parser.getdata(configPath, "Invioces")
+        data = parser.getdata(configPath, "Invoices")
         
         'If you give a correct configuration i\'load that from your file'
         

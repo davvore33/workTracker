@@ -12,5 +12,5 @@ src/bill.md
 src/datasheet.csv
 db/calendar.db
 src/dbAccess/sqlite_test.py
-db/*
 src/dbAccess/__pycache__/
+/invoice/model.tex

@@ -42,11 +42,16 @@ def fileCreation(db):
 
     events = db.getAllEvent()
 
-    print(type(events))
     csv1 = csv()
     csv1.writecsv(events)
     md1 = md()
     md1.write(events)
     tex = texCreator(BASE_DIR)
+    tex.write(events)
+    try:
+        tex.compiling()
+    except Exception as E:
+        logging.error("Error {} while writing {} tex file".format(E, tex))
+
 if __name__ == '__main__':
     main()
