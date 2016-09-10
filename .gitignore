@@ -14,3 +14,6 @@ db/calendar.db
 src/dbAccess/sqlite_test.py
 src/dbAccess/__pycache__/
 /invoice/model.tex
+db/
+invoice/
+/Configuration.ini
