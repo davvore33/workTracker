@@ -31,7 +31,7 @@ def main():
     dbPopulation(cal,db)
     fileCreation(db)
 
-    db.drop()
+    # db.drop()
 
 
 def dbPopulation(cal,db):
