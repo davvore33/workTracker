@@ -42,6 +42,11 @@ class Database:
             return 0
         return 1
 
+    def script_exec(self,sql):
+        conn = self.get_connection()
+        cur = conn.cursor()
+        cur.execute(sql)
+
     def commit(self):
         if (self.__conn != None):
             self.__conn.commit()
@@ -79,7 +84,7 @@ class Database:
         cur.execute(sql, row)
         return cur.fetchall()
 
-    def execute(self, sql):
+    def execute(self, sql: object) -> object:
         conn = self.get_connection()
         cur = conn.cursor()
         cur.execute(sql)

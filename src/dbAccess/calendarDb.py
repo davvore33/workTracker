@@ -4,11 +4,13 @@ from dbAccess.sqlite import Database
 
 
 class calendarDb(Database):
+
     columns = ('client', 'description', 'duration', 'payed', 'date', 'key')
 
     tablename = "calendar"
 
     def __init__(self, path):
+
         configPath = path + "/Configuration.ini"
         data = parser.getdata(configPath, "Database")
 
@@ -20,8 +22,24 @@ class calendarDb(Database):
                     name = i[1]
                 elif i[0] == "dir":
                     dir = i[1]
+                elif i[0] == "sqlscript":
+                    scriptpath = i[1]
             database = path + dir + name
             super().__init__(database=database)
+
+        self.creation(scriptpath)
+
+    def creation(self,scriptpath):
+
+        sql = ""
+
+        with  open(scriptpath, 'r') as sqlfile:
+            sqlist = sqlfile.read().split('\n')
+
+        for elem in sqlist:
+            sql = sql + elem
+        super().script_exec(sql)
+        super().commit()
 
     def insert(self, data, **kwargs):
         super().insert(table=self.tablename, columns=self.columns, data=data)
@@ -63,4 +81,4 @@ class calendarDb(Database):
         return super().get(table=self.tablename, where=where)
 
     def drop(self):
-        super.drop(self.tablename)
+        super().drop(self.tablename)
