@@ -18,35 +18,51 @@ from DateTime import DateTime
 from Events import Events
 
 
+def getCalendar(service):
+    calendars = service.calendarList().list().execute()
+    for i in calendars['items']:
+        if i['accessRole'] == 'owner':
+            if i['summary'] == 'Work':  # this represents my choice
+                calid = i['id']
+    return calid
+
+
 class Calendar:
     def __init__(self, basedir):
         self.SCOPES = 'https://www.googleapis.com/auth/calendar'  # string or iterable of strings, scope(s) to request.
         self.CLIENT_SECRET_FILE = basedir + '/credentials/client_secret_818319143567-0sd9u05ih2halljjtof34i650893kl67.apps.googleusercontent.com.json'  # string, File name of client secrets.
         self.APPLICATION_NAME = 'prova'
 
-        self.credentials = self.getCredentials()
+        self.credentials = self.__downloadCredentials__()
         self.http = self.credentials.authorize(httplib2.Http())
         self.service = discovery.build('calendar', 'v3', http=self.http)
 
-        self.calid = self.getCalendar(self.service)
+        self.calid = getCalendar(self.service)
         self.events = []
 
     def patchEvent(self, key, patch):
         updated_event = self.service.events().patch(calendarId=self.calid, eventId=key, body=patch).execute()
         logging.debug(updated_event)
 
-    def fill(self, startDate):
-        self.events = self.getEvents(self.calid, startDate)
+    def getEvents(self):
+        return self.events
 
-    def payedEvents(self, startDate, endDate):
+    def fill(self, startDate=None):
+        self.events = self.__downloadEvents__(startDate)
+
+    def getToPayEvents(self):
+        res = []
         for event in self.events:
-            if event.date < startDate or event.date > endDate:
-                patch = {'summary': "[ payed ] " + event.client}
-                self.patchEvent(event.key, patch)
-            else:
-                logging.debug("event {} is out of date range".format(event.key))
+            if event.payed is False:
+                res.append(event)
+        return res
 
-    def getCredentials(self):
+    def payedEvents(self, events):
+        for event in events:
+            patch = {'summary': "[ payed ] " + event.client}
+            self.patchEvent(event.key, patch)
+
+    def __downloadCredentials__(self):
         home_dir = os.path.expanduser('~')
         credential_dir = os.path.join(home_dir, '.credentials')  # TODO: sostitute with a path
         if not os.path.exists(credential_dir):
@@ -61,18 +77,18 @@ class Calendar:
             logging.debug('Storing credentials to {}'.format(credential_path))
         return credentials
 
-    def getEvents(self, calid, startDate=None, endDate=None):
-        if (startDate == None):
+    def __downloadEvents__(self, startDate=None, endDate=None):
+        if startDate is None:
             startDate = datetime.datetime.utcnow() - datetime.timedelta(weeks=26)
 
-        if (endDate == None):
-            endDate = datetime.datetime.utcnow().isoformat() + 'Z'
+        if endDate is None:
+            endDate = datetime.datetime.utcnow()
 
         startDateRaw = startDate.isoformat() + 'Z'
         endDateRaw = endDate.isoformat() + 'Z'
 
         eventsResult = self.service.events().list(
-            calendarId=calid if calid is not None else 'primary', timeMin=startDateRaw, timeMAx=endDateRaw,
+            calendarId=self.calid if self.calid is not None else 'primary', timeMin=startDateRaw, timeMax=endDateRaw,
             singleEvents=True, orderBy='startTime', ).execute()
 
         rawEvents = eventsResult.get('items', [])
@@ -96,15 +112,11 @@ class Calendar:
                 logging.debug("{} \\ while catching description from {}".format(E, key))
                 description = None
                 pass
-            event = Events(date=start.Date(), client=rawEvent['summary'], description=description, duration=duration,
+            if "[ payed ]" not in rawEvent['summary']:
+                event = Events(date=start.Date(), client=rawEvent['summary'], description=description, duration=duration,
                            payed=False, key=key)
+            else:
+                event = Events(date=start.Date(), client=rawEvent['summary'].lstrip("[ payed ]"), description=description,
+                               duration=duration, payed=True, key=key)
             events.append(event)
         return events
-
-    def getCalendar(self, service):
-        calendars = service.calendarList().list().execute()
-        for i in calendars['items']:
-            if i['accessRole'] == 'owner':
-                if i['summary'] == 'Work':  # this represents my choice
-                    calid = i['id']
-        return calid
