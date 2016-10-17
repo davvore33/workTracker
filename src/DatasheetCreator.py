@@ -1,22 +1,36 @@
-import csv
+import datetime
 
 
 class datasheetcreator:
+    def __init__(self, path, fileName):
+        if path is not None:
+            self.__path__ = path
+        elif self.__path__ is None:
+            raise IOError('You have to give me a path, please')
+
+        if type(fileName) is datetime:
+            self.__fileName__ = fileName.year + ".csv"
+        elif type(fileName) is str and fileName.endswith(end=".csv"):
+            self.__fileName__ = fileName
+        elif fileName is None:
+            self.__fileName__ = datetime.datetime.now().year + ".csv"
+        else:
+            raise IOError('What have you done?')
+
     def readcsv(self):
-        with open('eggs.csv', 'rb') as csvfile:
-            spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-        for row in spamreader:
-            print(", ".join(row))
+        with open(self.__path__, 'rb') as csvfile:
+            spamreader = csvfile.read()
+            print(spamreader)
 
-    def writecsv(self, invoiceNumber, date, howmuch):
-        with open('datasheet.csv', 'w', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',',
-                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            spamwriter.writerow(['invoiceNumber', 'date', 'howmuch'])
-            spamwriter.writerow(invoiceNumber, date, howmuch)
+    def writecsvdata(self, invoiceNumber, date, howmuch):
+        with open(self.__path__ + "/" + self.__fileName__, 'w', newline='') as csvfile:
+            csvfile.write("{},{},{}\n".format(invoiceNumber, date, howmuch))
 
-    def writeappendcsv(self, invoiceNumber, date, howmuch):
-        with open('datasheet.csv', 'wa', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',',
-                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            spamwriter.writerow(invoiceNumber, date, howmuch)
+    def writeappendcsv(self, data):
+        if type(data) is dict:
+            with open(self.__path__ + "/" + self.__fileName__, 'wa', newline='') as csvfile:
+                csvfile.write("{},{},{}\n".format(data.get('invoiceNumber'), data.get('date'),
+                                                  data.get('howmuch')))
+        else:
+            raise IOError("wrong data type {}".format(type(data)))
+
