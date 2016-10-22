@@ -7,14 +7,15 @@ import os
 import parser
 
 
-class texCreator:
+class invoiceCreator: #TODO: create a preview interface, use a tex library
     def __init__(self, passedPath):
         self.modelName = None
-        self.cmdPDF = None
-        self.cmdPDFargs = ""
+        self.cmd = None
+        self.cmdArgs = ""
         self.basePath = passedPath
         self.invoicesPath = None
-        self.tex = []
+        self.sourceTex = []
+        self.finalTex = []
 
         configPath = self.basePath + "/Configuration.ini"
         self.clientspath = self.basePath + "/Clients.ini"
@@ -25,7 +26,7 @@ class texCreator:
         except Exception as E:
             logging.error("Error {} reading {}".format(self.modelName, E))
 
-    def write(self, args):
+    def load(self, args):
         howmuch = 0
         for event in args:
             howmuch = howmuch + float(event.duration) * 12.5
@@ -36,26 +37,28 @@ class texCreator:
                  ('_howmuch_', str(howmuch)),
                  ('_description_', "sono stati pagati {} per un totale di {} ore".format(howmuch, howmuch / 12.5)), ]
         # self.__gimmeargs__("EveryNet di Federico Scarpa", args) TODO: uses this stuff
-        texComplete = []
-        for line in self.tex:
+        self.finalTex = []
+        for line in self.sourceTex:
             for (reg, var) in regex:
                 if reg in line:
                     line = line.replace(reg, var)
-            texComplete.append(line)
+            self.finalTex.append(line)
+
+    def write(self):
         with open(self.invoicesPath + "/" + "ciaone.tex", 'w') as texfile:
-            for line in texComplete:
+            for line in self.finalTex:
                 texfile.write(line + "\n")
 
     def read(self):
         try:
             texfile = open(self.invoicesPath + "/" + self.modelName, 'r')
             rawTex = texfile.read()
-            self.tex = rawTex.split("\n")
+            self.sourceTex = rawTex.split("\n")
         except IOError as E:
             logging.error("{} \\ during openoing {}".format(E, texfile))
 
-    def __gimmeargs__(self, cliente, args):
-        data = parser.getdata(self.clientspath, cliente)
+    def __gimmeargs__(self, client):
+        data = parser.getdata(self.clientspath, client)
 
         'If you give a correct configuration i\'load that from your file'
 
@@ -64,10 +67,10 @@ class texCreator:
                 if i[0].upper() == "dir".upper():
                     self.basePath = i[1]
                 elif i[0].upper() == "cmdPDF".upper():
-                    cose = i[1].split(' ')
-                    self.cmdPDF = cose.pop(0)  # I'm removing the cmd modelName
-                    for cosa in cose:
-                        self.cmdPDFargs = self.cmdPDFargs + " " + cosa  # in this way the otherone will be the arguments
+                    loaded = i[1].split(' ')
+                    self.cmd = loaded.pop(0)  # I'm removing the cmd modelName
+                    for elem in loaded:
+                        self.cmdArgs = self.cmdArgs + " " + elem  # in this way the otherone will be the arguments
                 elif i[0].upper() == "file".upper():
                     self.modelName = i[1]
 
@@ -90,8 +93,8 @@ class texCreator:
                     self.invoicesPath = self.basePath + i[1]
                 elif i[0].upper() == "cmdPDF".upper():
                     cose = i[1].split(' ')
-                    self.cmdPDF = cose.pop(0)  # I'm removing the cmd modelName
+                    self.cmd = cose.pop(0)  # I'm removing the cmd modelName
                     for cosa in cose:
-                        self.cmdPDFargs = self.cmdPDFargs + " " + cosa  # in this way the otherone will be the arguments
+                        self.cmdArgs = self.cmdArgs + " " + cosa  # in this way the otherone will be the arguments
                 elif i[0].upper() == "file".upper():
                     self.modelName = i[1]

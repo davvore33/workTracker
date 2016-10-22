@@ -18,7 +18,7 @@ from DateTime import DateTime
 from Events import Events
 
 
-def getCalendar(service):
+def getCalendar(service): #TODO: create a calendar configuration interface, create a credential acquisition interface
     calendars = service.calendarList().list().execute()
     for i in calendars['items']:
         if i['accessRole'] == 'owner':
@@ -39,6 +39,11 @@ class Calendar:
 
         self.calid = getCalendar(self.service)
         self.events = []
+
+    def getEventById(self, id):
+        for event in self.events:
+            if event.key == id:
+                return event
 
     def patchEvent(self, key, patch):
         updated_event = self.service.events().patch(calendarId=self.calid, eventId=key, body=patch).execute()
@@ -113,10 +118,10 @@ class Calendar:
                 description = None
                 pass
             if "[ payed ]" not in rawEvent['summary']:
-                event = Events(date=start.Date(), client=rawEvent['summary'], description=description, duration=duration,
+                event = Events(date=start.Date(), client=rawEvent['summary'].rstrip(" "), description=description, duration=duration,
                            payed=False, key=key)
             else:
-                event = Events(date=start.Date(), client=rawEvent['summary'].lstrip("[ payed ]"), description=description,
+                event = Events(date=start.Date(), client=rawEvent['summary'].lstrip("[ payed ]").rstrip(" "), description=description,
                                duration=duration, payed=True, key=key)
             events.append(event)
         return events
