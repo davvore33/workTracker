@@ -178,6 +178,7 @@
      <string>Fi&amp;le</string>
     </property>
     <addaction name="actionUpdate_2"/>
+    <addaction name="actionChange_Calendar"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -189,7 +190,12 @@
   </action>
   <action name="actionUpdate_2">
    <property name="text">
-    <string>Update</string>
+    <string>&amp;Update</string>
+   </property>
+  </action>
+  <action name="actionChange_Calendar">
+   <property name="text">
+    <string>Change Calendar</string>
    </property>
   </action>
  </widget>

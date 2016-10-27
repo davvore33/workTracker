@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 import logging
 import os
 import sys
 
+import parser
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QCheckBox
@@ -25,22 +28,13 @@ BASE_DIR = os.path.dirname(base)
 class mainWindow(QMainWindow):
     def __init__(self):
         super(mainWindow, self).__init__()
-        credentials = Credentials(BASE_DIR)
 
-        # I'm going to create calendar using "calid" into the config file
         self.cal = None
-        while self.cal is None:
-            try:
-                self.cal = Calendar(BASE_DIR, credentials.getService())
-            except calidNotFoundException as c:
-                logging.debug(c)
-                setCalId(BASE_DIR, credentials.getService())
-
-        self.cal.fill()
         self.gui = mainForm.Ui_MainWindow()
         self.gui.setupUi(self)
 
         self.gui.actionUpdate.triggered.connect(self.eventLabelSet)
+        self.gui.actionChange_Calendar.triggered.connect(self.changeCalendar)
         self.gui.pushButton.clicked.connect(self.getEventsCheckList)
 
         # self.comboUtil = QComboBox(self)
@@ -127,16 +121,38 @@ class mainWindow(QMainWindow):
                             else:
                                 itemWidget.setChecked(1)
 
+    def changeCalendar(self):
+        path = os.path.join(BASE_DIR, "Configuration.ini")
+        data = parser.getDict(path)
+        elem = data["Calendar"]
+        elem["calid"] = "none"
+        data["Calendar"] = elem
+        parser.writedata(data, path)
+        self.calInitializer()
+
+    def calInitializer(self):
+        credentials = Credentials(BASE_DIR)
+
+        # I'm going to create calendar using "calid" into the config file
+        while self.cal is None:
+            try:
+                self.cal = Calendar(BASE_DIR, credentials.getService())
+            except calidNotFoundException as c:
+                logging.debug(c)
+                setCalId(BASE_DIR, credentials.getService())
+        self.cal.fill()
+
     def eventLabelSet(self):  # TODO: a better style
         """
         set the event list
         :return:
         """
 
+        self.calInitializer()
         self.gui.checboxesController.clicked.connect(self.changeCheckboxesStatus)
 
         events = self.cal.getEvents()
-
+        # self.gui.scrollLayout.removeItem() #TODO: blank the event visualized
         for event in events:
             horizontalLayout = QtWidgets.QHBoxLayout()
             horizontalLayout.setObjectName("horizontalLayout")
