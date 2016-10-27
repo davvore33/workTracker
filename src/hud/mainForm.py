@@ -85,9 +85,9 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        self.actionCalendar = QtWidgets.QAction(MainWindow)
-        self.actionCalendar.setObjectName("actionCalendar")
-        self.menuFile.addAction(self.actionCalendar)
+        self.actionUpdate = QtWidgets.QAction(MainWindow)
+        self.actionUpdate.setObjectName("actionUpdate")
+        self.menuFile.addAction(self.actionUpdate)
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -112,5 +112,5 @@ class Ui_MainWindow(object):
         # self.checkBox.setText(_translate("MainWindow", "CheckBox"))
         self.pushButton.setText(_translate("MainWindow", "Pay Off"))
         self.menuFile.setTitle(_translate("MainWindow", "Fi&le"))
-        self.actionCalendar.setText(_translate("MainWindow", "&Calendar"))
+        self.actionUpdate.setText(_translate("MainWindow", "&Update"))
 

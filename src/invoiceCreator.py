@@ -56,7 +56,7 @@ class invoiceCreator:  # TODO: create a preview interface, use a tex library
             logging.error("{} \\ during opening {}".format(E, texfile))
 
     def __loadArgs__(self):
-        data = parser.getdata(self.clientsPath, self.invoiceClient)
+        data = parser.getList(self.clientsPath, self.invoiceClient)
         res = dict()
         'If you give a correct configuration i\'load that from your file'
 
@@ -79,7 +79,7 @@ class invoiceCreator:  # TODO: create a preview interface, use a tex library
             raise BaseException("this client doesn't exist")
 
     def __config__(self, configPath):
-        data = parser.getdata(configPath, "Invoices")
+        data = parser.getList(configPath, "Invoices")
 
         'If you give a correct configuration i\'load that from your file'
 

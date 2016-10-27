@@ -177,14 +177,19 @@
     <property name="title">
      <string>Fi&amp;le</string>
     </property>
-    <addaction name="actionCalendar"/>
+    <addaction name="actionUpdate_2"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionCalendar">
+  <action name="actionUpdate">
    <property name="text">
     <string>&amp;Calendar</string>
+   </property>
+  </action>
+  <action name="actionUpdate_2">
+   <property name="text">
+    <string>Update</string>
    </property>
   </action>
  </widget>

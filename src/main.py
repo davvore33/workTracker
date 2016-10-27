@@ -6,12 +6,13 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QComboBox
+from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QWidgetItem
 
-from CalendarReader import Calendar
+from CalendarReader import Calendar, setCalId, Credentials, calidNotFoundException
 from MarkdownCreator import markdownCreator as md
 from invoiceCreator import invoiceCreator
 from hud import mainForm as mainForm
@@ -24,23 +25,25 @@ BASE_DIR = os.path.dirname(base)
 class mainWindow(QMainWindow):
     def __init__(self):
         super(mainWindow, self).__init__()
-        try:
-            self.cal = Calendar(BASE_DIR)
-            try:
-                self.cal.fill()
-            except BaseException as E:
-                logging.error("{} \\ while filling calendar".format(E))
-                exit()
+        credentials = Credentials(BASE_DIR)
 
-        except BaseException as E:
-            logging.error("{} \\ while opening calendar".format(E))
-            exit()
+        # I'm going to create calendar using "calid" into the config file
+        self.cal = None
+        while self.cal is None:
+            try:
+                self.cal = Calendar(BASE_DIR, credentials.getService())
+            except calidNotFoundException as c:
+                logging.debug(c)
+                setCalId(BASE_DIR, credentials.getService())
+
+        self.cal.fill()
         self.gui = mainForm.Ui_MainWindow()
         self.gui.setupUi(self)
-        self.eventLabelSet()
+
+        self.gui.actionUpdate.triggered.connect(self.eventLabelSet)
         self.gui.pushButton.clicked.connect(self.getEventsCheckList)
 
-        self.comboUtil = QComboBox(self)
+        # self.comboUtil = QComboBox(self)
 
     def getEventsCheckList(self):
         """
@@ -80,8 +83,8 @@ class mainWindow(QMainWindow):
             a.append(event)
             clientEvents[event.client] = a
 
-        self.comboUtil.addItems(clientEvents)
-        self.comboUtil.show()
+        # self.comboUtil.addItems(clientEvents)
+        # self.comboUtil.show()
 
         # going to change events into the calendar
         for client in clientEvents.keys():

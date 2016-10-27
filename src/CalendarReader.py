@@ -2,42 +2,124 @@
 
 from __future__ import print_function
 
+import datetime
 import logging
-
-import httplib2
 import os
 
-from apiclient import discovery
+import httplib2
 import oauth2client
+import parser
+from DateTime import DateTime
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QRadioButton
+from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 
-import datetime
-from DateTime import DateTime
-
 from Events import Events
+from hud import getCalIdForm as getCalUiForm
 
 
-def getCalendar(service):  # TODO: create a calendar configuration interface, create a credential acquisition interface
-    calendars = service.calendarList().list().execute()
-    for i in calendars['items']:
-        if i['accessRole'] == 'owner':
-            if i['summary'] == 'Work':  # this represents my choice
-                calid = i['id']
-    return calid
+class calidNotFoundException(BaseException):
+    def __init__(self, args):
+        super()
+        logging.error(args)
 
 
-class Calendar:
-    def __init__(self, basedir):
-        self.SCOPES = 'https://www.googleapis.com/auth/calendar'  # string or iterable of strings, scope(s) to request.
-        self.CLIENT_SECRET_FILE = basedir + '/credentials/client_secret_818319143567-0sd9u05ih2halljjtof34i650893kl67.apps.googleusercontent.com.json'  # string, File name of client secrets.
-        self.APPLICATION_NAME = 'prova'
+class setCalId(QDialog):
+    def __init__(self, configPath, service):
 
-        self.credentials = self.__downloadCredentials__()
+        super(setCalId, self).__init__()
+        self.gui = getCalUiForm.Ui_Dialog()
+        self.gui.setupUi(self)
+        self.configPath = configPath
+        calendarList = service.calendarList().list().execute()
+        for i in calendarList['items']:
+            if i['accessRole'] == 'owner':
+                radioButton = QRadioButton(self.gui.verticalLayoutWidget)
+                radioButton.setText(i['summary'])
+                radioButton.setObjectName("Radiobutton_" + i['id'])
+                self.gui.verticalLayout.addWidget(radioButton)
+        ok, canc = self.gui.buttonBox.buttons()
+        ok.clicked.connect(self.getCheckedCalid)
+        self.exec()
+        logging.debug("added {} item".format(i))
+
+    def getCheckedCalid(self):
+        for i in range(0, self.gui.verticalLayout.count()):
+            item = self.gui.verticalLayout.itemAt(i)
+            widget = item.widget()
+            logging.debug("i'm watching {} item".format(widget))
+            if type(widget) is QRadioButton and widget.isChecked():
+                id = widget.objectName().strip("Radiobutton_")
+                logging.debug("found {} id".format(id))
+                self.__writeConf__(id)
+                return
+                # TODO: write the configuration file
+        message = "empty list while getCheckedCalid"
+        logging.error(message)
+        raise BaseException(message)
+
+    def __writeConf__(self, calid):
+        path = os.path.join(self.configPath, "Configuration.ini")
+        data = parser.getDict(path)
+        elem = data["Calendar"]
+        elem["calid"] = calid
+        data["Calendar"] = elem
+        parser.writedata(data, path)
+
+
+class Credentials:
+    def __init__(self, baseDir):
+        self.baseDir = baseDir
+        self.credentialDir = self.baseDir + "/credentials"
+        self.clientSecretFile = self.credentialDir + '/client_secret.json'  # string, File name of client secrets.
+        self.clientScope = "https://accounts.google.com/o/oauth2/v2/auth"
+        self.userScope = 'https://www.googleapis.com/auth/calendar'  # string or iterable of strings, scope(s) to request.
+        self.userSecretFile = self.credentialDir + 'user_secret.json'
+        self.applicationName = 'workTracker'
+
+        self.credentials = self.__getUserSecret__()
         self.http = self.credentials.authorize(httplib2.Http())
         self.service = discovery.build('calendar', 'v3', http=self.http)
 
-        self.calid = getCalendar(self.service)
+    def getService(self):
+        if self.service is not None:
+            return self.service
+        else:
+            raise BaseException("non ce l'ho")
+
+    def __getUserSecret__(self):
+        credentialFile = os.path.join(self.credentialDir, 'user_secret.json')
+        store = oauth2client.file.Storage(credentialFile)
+        credentials = store.get()
+        if not credentials or credentials.invalid:
+            flow = client.flow_from_clientsecrets(filename=self.clientSecretFile, scope=self.userScope)
+            flow.user_agent = self.applicationName
+            credentials = tools.run_flow(flow, store)
+            logging.debug('Storing credentials to {}'.format(credentialFile))
+        return credentials
+
+    def __getClientSecret__(self):
+        # client_id =
+        # response_type = "token"
+        credentialFile = os.path.join(self.credentialDir, 'client_secret_try.json')
+        store = oauth2client.file.Storage(credentialFile)
+        credentials = store.get()
+        if not credentials or credentials.invalid:
+            flow = client.flow_from_clientsecrets(filename=self.userSecretFile, scope=self.clientScope)
+            flow.user_agent = self.applicationName
+            credentials = tools.run_flow(flow, store)
+            logging.debug('Storing credentials to {}'.format(credentialFile))
+        return credentials
+
+
+class Calendar:
+    def __init__(self, baseDir, passedService):
+        self.service = passedService
+
+        self.calid = self.__confLoading__(baseDir)
+
         self.events = []
 
     def getEventById(self, id):
@@ -68,20 +150,17 @@ class Calendar:
             patch = {'summary': "[ payed ] " + event.client}
             self.patchEvent(event.key, patch)
 
-    def __downloadCredentials__(self):
-        home_dir = os.path.expanduser('~')
-        credential_dir = os.path.join(home_dir, '.credentials')  # TODO: sostitute with a path
-        if not os.path.exists(credential_dir):
-            os.makedirs(credential_dir)
-        credential_path = os.path.join(credential_dir, 'calendar-python-quickstart.json')
-        store = oauth2client.file.Storage(credential_path)
-        credentials = store.get()
-        if not credentials or credentials.invalid:
-            flow = client.flow_from_clientsecrets(filename=self.CLIENT_SECRET_FILE, scope=self.SCOPES)
-            flow.user_agent = self.APPLICATION_NAME
-            credentials = tools.run(flow, store)
-            logging.debug('Storing credentials to {}'.format(credential_path))
-        return credentials
+    def __confLoading__(self, configPath):
+        path = os.path.join(configPath, "Configuration.ini")
+        data = parser.getList(path, "Calendar")
+
+        'If you give a correct configuration i\'load that from your file'
+
+        if data is not None:
+            for i in data:
+                if i[0].upper() == 'calid'.upper() and i[1].upper() != "none".upper():
+                        return i[1]
+            raise calidNotFoundException("calid not found in {}".format(configPath))
 
     def __downloadEvents__(self, startDate=None, endDate=None):
         if startDate is None:

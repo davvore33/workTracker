@@ -1,3 +1,4 @@
+# TODO: change class, use a dictionary list to save entire events list
 class Events(object):
     date = None
     duration = None
