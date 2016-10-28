@@ -5,7 +5,7 @@ def getDict(path, Section = None):
     '''
     :param path: path of your configuration, usually into your project directory
     :param Section: sectionf of the documentation that you want to read
-    :return: return a list of tuples
+    :return: return a dictionary of dictionaries
     '''
     parser = configparser.ConfigParser()
     parser.read(path)

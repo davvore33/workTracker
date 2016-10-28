@@ -3,26 +3,50 @@
 import logging
 import os
 import sys
+from datetime import datetime
 
-import parser
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QCheckBox
-from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QWidgetItem
 
+import parser
 from CalendarReader import Calendar, setCalId, Credentials, calidNotFoundException
 from MarkdownCreator import markdownCreator as md
-from invoiceCreator import invoiceCreator
+from hud import getStartEndTimes
 from hud import mainForm as mainForm
+from invoiceCreator import invoiceCreator
 
 base = os.path.abspath(__file__)
 base, null = os.path.split(base)
 BASE_DIR = os.path.dirname(base)
+
+
+class getStartEndTime(QDialog):
+    def __init__(self):
+        super(getStartEndTime, self).__init__()
+        self.gui = getStartEndTimes.Ui_Dialog()
+        self.gui.setupUi(self)
+
+        self.end = None
+        self.start = None
+
+        self.gui.EndTime.dateChanged.connect(self.setEndTimeDate)
+        self.gui.StartTime.dateChanged.connect(self.setStartTimeDate)
+        self.exec()
+
+    def setEndTimeDate(self, t):
+        self.end = datetime.combine(t.toPyDate(), datetime.min.time())
+
+    def setStartTimeDate(self, t):
+        self.start = datetime.combine(t.toPyDate(), datetime.min.time())
+
+    def getValors(self):
+        return self.start, self.end
 
 
 class mainWindow(QMainWindow):
@@ -33,11 +57,17 @@ class mainWindow(QMainWindow):
         self.gui = mainForm.Ui_MainWindow()
         self.gui.setupUi(self)
 
-        self.gui.actionUpdate.triggered.connect(self.eventLabelSet)
+        # self.gui.actionUpdate.triggered.connect(self.eventLabelSet)
+        self.gui.actionUpdate.triggered.connect(self.gimmeYourTimes)
         self.gui.actionChange_Calendar.triggered.connect(self.changeCalendar)
         self.gui.pushButton.clicked.connect(self.getEventsCheckList)
 
         # self.comboUtil = QComboBox(self)
+
+    def gimmeYourTimes(self):
+        startEndDialog = getStartEndTime()
+        start, end = startEndDialog.getValors()
+        self.eventLabelSet(start, end)
 
     def getEventsCheckList(self):
         """
@@ -95,7 +125,7 @@ class mainWindow(QMainWindow):
             except Exception as E:
                 logging.error("Error {} while writing {} tex file".format(E, client))
 
-    def getNewLabel(self, text, status, name=None):
+    def _getNewLabel(self, text, status, name=None):
         label = QLabel(self.gui.scrollAreaWidgetContents)
         label.setText(str(text))
         label.setObjectName(name)
@@ -130,7 +160,7 @@ class mainWindow(QMainWindow):
         parser.writedata(data, path)
         self.calInitializer()
 
-    def calInitializer(self):
+    def calInitializer(self, startDate, endDate):
         credentials = Credentials(BASE_DIR)
 
         # I'm going to create calendar using "calid" into the config file
@@ -140,15 +170,15 @@ class mainWindow(QMainWindow):
             except calidNotFoundException as c:
                 logging.debug(c)
                 setCalId(BASE_DIR, credentials.getService())
-        self.cal.fill()
+        self.cal.fill(startDate, endDate)
 
-    def eventLabelSet(self):  # TODO: a better style
+    def eventLabelSet(self, startDate, endDate):  # TODO: a better style
         """
         set the event list
         :return:
         """
 
-        self.calInitializer()
+        self.calInitializer(startDate, endDate)
         self.gui.checboxesController.clicked.connect(self.changeCheckboxesStatus)
 
         events = self.cal.getEvents()
@@ -170,13 +200,13 @@ class mainWindow(QMainWindow):
 
             horizontalLayout.addWidget(checkBox)
 
-            label = self.getNewLabel(event.client, "payed" if event.payed else "not payed",
+            label = self._getNewLabel(event.client, "payed" if event.payed else "not payed",
                                      "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
-            label = self.getNewLabel(event.duration, "payed" if event.payed else "not payed",
+            label = self._getNewLabel(event.duration, "payed" if event.payed else "not payed",
                                      "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
-            label = self.getNewLabel(event.date, "payed" if event.payed else "not payed",
+            label = self._getNewLabel(event.date, "payed" if event.payed else "not payed",
                                      "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
 

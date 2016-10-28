@@ -116,7 +116,7 @@ class Calendar:
     def __init__(self, baseDir, passedService):
         self.service = passedService
 
-        self.calid = self.__confLoading__(baseDir)
+        self.calid = self._confLoading(baseDir)
 
         self.events = []
 
@@ -126,29 +126,29 @@ class Calendar:
                 return event
         raise BaseException("this id doesn't exists")
 
-    def patchEvent(self, key, patch):
+    def _patchEvent(self, key, patch):
         updated_event = self.service.events().patch(calendarId=self.calid, eventId=key, body=patch).execute()
         logging.debug(updated_event)
 
     def getEvents(self):
         return self.events
 
-    def fill(self, startDate=None):
-        self.events = self.__downloadEvents__(startDate)
+    def fill(self, startDate, endDate):
+        self.events = self._downloadEvents(startDate, endDate)
 
-    def getToPayEvents(self):
-        res = []
-        for event in self.events:
-            if event.payed is False:
-                res.append(event)
-        return res
+    # def getToPayEvents(self):
+    #     res = []
+    #     for event in self.events:
+    #         if event.payed is False:
+    #             res.append(event)
+    #     return res
 
     def payedEvents(self, events):
         for event in events:
             patch = {'summary': "[ payed ] " + event.client}
-            self.patchEvent(event.key, patch)
+            self._patchEvent(event.key, patch)
 
-    def __confLoading__(self, configPath):
+    def _confLoading(self, configPath):
         path = os.path.join(configPath, "Configuration.ini")
         data = parser.getList(path, "Calendar")
 
@@ -157,19 +157,19 @@ class Calendar:
         if data is not None:
             for i in data:
                 if i[0].upper() == 'calid'.upper() and i[1].upper() != "none".upper():
-                        return i[1]
+                    return i[1]
             raise calidNotFoundException("calid not found in {}".format(configPath))
 
-    def __downloadEvents__(self, startDate=None, endDate=None):
+    def _downloadEvents(self, startDate=None, endDate=None):
         if startDate is None:
-            startDate = datetime.datetime.utcnow() - datetime.timedelta(weeks=26)
-
+            startDate = datetime.datetime.utcnow() - datetime.timedelta(weeks=8)
         if endDate is None:
             endDate = datetime.datetime.utcnow()
-
-        startDateRaw = startDate.isoformat() + 'Z'
-        endDateRaw = endDate.isoformat() + 'Z'
-
+        if type(startDate) is datetime.datetime and type(endDate) is datetime.datetime:
+            startDateRaw = startDate.isoformat() + 'Z'
+            endDateRaw = endDate.isoformat() + 'Z'
+        else:
+            raise BaseException("Wrong date type {}".format(startDate))
         eventsResult = self.service.events().list(
             calendarId=self.calid if self.calid is not None else 'primary', timeMin=startDateRaw, timeMax=endDateRaw,
             singleEvents=True, orderBy='startTime', ).execute()

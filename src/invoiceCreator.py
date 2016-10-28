@@ -21,23 +21,23 @@ class invoiceCreator:  # TODO: create a preview interface, use a tex library
         self.basePath = passedPath
         configPath = self.basePath + "/Configuration.ini"
         self.clientsPath = self.basePath + "/Clients.ini"
-        self.__config__(configPath)
+        self._config(configPath)
 
         try:
-            self.__readModel__()
+            self._readModel()
         except Exception as E:
             logging.error("Error {} reading {}".format(self.modelName, E))
 
         # now I can load
-        self.__createInvoice__(events)
+        self._createInvoice(events)
 
-    def __createInvoice__(self, events):
+    def _createInvoice(self, events):
         if self.__modelTex__ is None:
             raise BaseException("give me the model")
         hours = 0
         for event in events:
             hours += float(event.duration)
-        regex = self.__loadArgs__()  # TODO: uses this stuff
+        regex = self._loadArgs()  # TODO: uses this stuff
         self.finalTex = []
         for line in self.__modelTex__:
             for (reg, var) in regex:
@@ -47,7 +47,7 @@ class invoiceCreator:  # TODO: create a preview interface, use a tex library
                     line = line.replace(reg, var)
             self.finalTex.append(line)
 
-    def __readModel__(self):
+    def _readModel(self):
         try:
             texfile = open(self.invoicesPath + "/" + self.modelName, 'r')
             rawTex = texfile.read()
@@ -55,7 +55,7 @@ class invoiceCreator:  # TODO: create a preview interface, use a tex library
         except IOError as E:
             logging.error("{} \\ during opening {}".format(E, texfile))
 
-    def __loadArgs__(self):
+    def _loadArgs(self):
         data = parser.getList(self.clientsPath, self.invoiceClient)
         res = dict()
         'If you give a correct configuration i\'load that from your file'
@@ -78,7 +78,7 @@ class invoiceCreator:  # TODO: create a preview interface, use a tex library
         else:
             raise BaseException("this client doesn't exist")
 
-    def __config__(self, configPath):
+    def _config(self, configPath):
         data = parser.getList(configPath, "Invoices")
 
         'If you give a correct configuration i\'load that from your file'
