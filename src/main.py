@@ -158,9 +158,12 @@ class mainWindow(QMainWindow):
         elem["calid"] = "none"
         data["Calendar"] = elem
         parser.writedata(data, path)
-        self.calInitializer()
+        self.cal = None
 
-    def calInitializer(self, startDate, endDate):
+        self.gimmeYourTimes()
+
+    def calInitializer(self):
+
         credentials = Credentials(BASE_DIR)
 
         # I'm going to create calendar using "calid" into the config file
@@ -170,15 +173,15 @@ class mainWindow(QMainWindow):
             except calidNotFoundException as c:
                 logging.debug(c)
                 setCalId(BASE_DIR, credentials.getService())
-        self.cal.fill(startDate, endDate)
 
     def eventLabelSet(self, startDate, endDate):  # TODO: a better style
         """
         set the event list
         :return:
         """
-
-        self.calInitializer(startDate, endDate)
+        if self.cal is None:
+            self.calInitializer()
+        self.cal.fill(startDate, endDate)
         self.gui.checboxesController.clicked.connect(self.changeCheckboxesStatus)
 
         events = self.cal.getEvents()

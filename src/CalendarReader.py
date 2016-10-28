@@ -49,7 +49,7 @@ class setCalId(QDialog):
             widget = item.widget()
             logging.debug("i'm watching {} item".format(widget))
             if type(widget) is QRadioButton and widget.isChecked():
-                id = widget.objectName().strip("Radiobutton_")
+                id = widget.objectName()[len("Radiobutton_"):]
                 logging.debug("found {} id".format(id))
                 self.__writeConf__(id)
                 return
@@ -170,9 +170,8 @@ class Calendar:
             endDateRaw = endDate.isoformat() + 'Z'
         else:
             raise BaseException("Wrong date type {}".format(startDate))
-        eventsResult = self.service.events().list(
-            calendarId=self.calid if self.calid is not None else 'primary', timeMin=startDateRaw, timeMax=endDateRaw,
-            singleEvents=True, orderBy='startTime', ).execute()
+        eventsResult = self.service.events().list(calendarId=self.calid, timeMin=startDateRaw, timeMax=endDateRaw,
+                                                  singleEvents=True, orderBy='startTime', ).execute()
 
         rawEvents = eventsResult.get('items', [])
         events = []
