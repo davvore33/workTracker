@@ -18,16 +18,21 @@ from Events import Events
 from hud import getCalIdForm as getCalUiForm
 
 
-class calidNotFoundException(BaseException):
+# Exception loaded when there's no calid into the config
+class calid_NotFoundException(BaseException):
     def __init__(self, args):
         super()
         logging.error(args)
 
 
-class setCalId(QDialog):
+class set_cal_id(QDialog):
     def __init__(self, configPath, service):
-
-        super(setCalId, self).__init__()
+        """
+        calid set constructor
+        :param configPath:
+        :param service:
+        """
+        super(set_cal_id, self).__init__()
         self.gui = getCalUiForm.Ui_Dialog()
         self.gui.setupUi(self)
         self.configPath = configPath
@@ -39,11 +44,15 @@ class setCalId(QDialog):
                 radioButton.setObjectName("Radiobutton_" + i['id'])
                 self.gui.verticalLayout.addWidget(radioButton)
         ok, canc = self.gui.buttonBox.buttons()
-        ok.clicked.connect(self.getCheckedCalid)
+        ok.clicked.connect(self._get_checked_calid)
         self.exec()
         logging.debug("added {} item".format(i))
 
-    def getCheckedCalid(self):
+    def _get_checked_calid(self):
+        """
+        Function that set the calid chosen
+        :return:
+        """
         for i in range(0, self.gui.verticalLayout.count()):
             item = self.gui.verticalLayout.itemAt(i)
             widget = item.widget()
@@ -51,24 +60,32 @@ class setCalId(QDialog):
             if type(widget) is QRadioButton and widget.isChecked():
                 id = widget.objectName()[len("Radiobutton_"):]
                 logging.debug("found {} id".format(id))
-                self.__writeConf__(id)
+                self._write_conf(id)
                 return
-                # TODO: write the configuration file
-        message = "empty list while getCheckedCalid"
+        message = "empty list while _get_checked_calid"
         logging.error(message)
         raise BaseException(message)
 
-    def __writeConf__(self, calid):
+    def _write_conf(self, calid):
+        """
+        Private function needed to save the calid into the credential file
+        :param calid: calid to save
+        :return:
+        """
         path = os.path.join(self.configPath, "Configuration.ini")
-        data = parser.getDict(path)
+        data = parser.get_dict(path)
         elem = data["Calendar"]
         elem["calid"] = calid
         data["Calendar"] = elem
-        parser.writedata(data, path)
+        parser.write_data(data, path)
 
 
 class Credentials:
     def __init__(self, baseDir):
+        """
+        Credentials constructor
+        :param baseDir:
+        """
         self.baseDir = baseDir
         self.credentialDir = self.baseDir + "/credentials"
         self.clientSecretFile = self.credentialDir + '/client_secret.json'  # string, File name of client secrets.
@@ -77,17 +94,25 @@ class Credentials:
         self.userSecretFile = self.credentialDir + 'user_secret.json'
         self.applicationName = 'workTracker'
 
-        self.credentials = self.__getUserSecret__()
+        self.credentials = self._get_user_secret()
         self.http = self.credentials.authorize(httplib2.Http())
         self.service = discovery.build('calendar', 'v3', http=self.http)
 
-    def getService(self):
+    def get_service(self):
+        """
+        Function that allow to get the service initialized by this class
+        :return: service
+        """
         if self.service is not None:
             return self.service
         else:
-            raise BaseException("non ce l'ho")
+            raise BaseException("No service founded")
 
-    def __getUserSecret__(self):
+    def _get_user_secret(self):
+        """
+        Function that allow to get the google client secret
+        :return:
+        """
         credentialFile = os.path.join(self.credentialDir, 'user_secret.json')
         store = oauth2client.file.Storage(credentialFile)
         credentials = store.get()
@@ -98,7 +123,11 @@ class Credentials:
             logging.debug('Storing credentials to {}'.format(credentialFile))
         return credentials
 
-    def __getClientSecret__(self):
+    def _get_client_secret(self):  # TODO: makes this work properly
+        """
+        Function that allow to get the google client secret
+        :return: google client secret
+        """
         # client_id =
         # response_type = "token"
         credentialFile = os.path.join(self.credentialDir, 'client_secret_try.json')
@@ -114,43 +143,64 @@ class Credentials:
 
 class Calendar:
     def __init__(self, baseDir, passedService):
+        """
+        Calendar constructor
+        :param baseDir: where the project is located
+        :param passedService: services needed to use google calendar
+        """
         self.service = passedService
 
-        self.calid = self._confLoading(baseDir)
+        self.cal_id = self._conf_loading(baseDir)
 
         self.events = []
 
-    def getEventById(self, id):
+    def get_event_by_id(self, key):
+        """
+        Function that allow to return a particular event
+        :param key: which event to get
+        :return: the event
+        """
         for event in self.events:
-            if event.key == id:
+            if event.key == key:
                 return event
         raise BaseException("this id doesn't exists")
 
     def _patchEvent(self, key, patch):
-        updated_event = self.service.events().patch(calendarId=self.calid, eventId=key, body=patch).execute()
+        """
+        Private function that allot to modify events
+        :param key: event to patch
+        :param patch: what have to be modified
+        :return:
+        """
+        updated_event = self.service.events().patch(calendarId=self.cal_id, eventId=key, body=patch).execute()
         logging.debug(updated_event)
 
-    def getEvents(self):
+    def get_events(self):
+        """
+        Function that return events of this calendar
+        :return: events of this calendar
+        """
         return self.events
 
-    def fill(self, startDate, endDate):
-        self.events = self._downloadEvents(startDate, endDate)
-
-    # def getToPayEvents(self):
-    #     res = []
-    #     for event in self.events:
-    #         if event.payed is False:
-    #             res.append(event)
-    #     return res
-
-    def payedEvents(self, events):
+    def pay_events(self, events):
+        """
+        Function that set "payed" status to passed events
+        :param events: events to set as payed
+        :return:
+        """
         for event in events:
             patch = {'summary': "[ payed ] " + event.client}
             self._patchEvent(event.key, patch)
 
-    def _confLoading(self, configPath):
+    @staticmethod
+    def _conf_loading(configPath):
+        """
+        Private function that allow to load your config file
+        :param configPath: config file path
+        :return:
+        """
         path = os.path.join(configPath, "Configuration.ini")
-        data = parser.getList(path, "Calendar")
+        data = parser.get_list(path, "Calendar")
 
         'If you give a correct configuration i\'load that from your file'
 
@@ -158,9 +208,15 @@ class Calendar:
             for i in data:
                 if i[0].upper() == 'calid'.upper() and i[1].upper() != "none".upper():
                     return i[1]
-            raise calidNotFoundException("calid not found in {}".format(configPath))
+            raise calid_NotFoundException("calid not found in {}".format(configPath))
 
-    def _downloadEvents(self, startDate=None, endDate=None):
+    def download_events(self, startDate=None, endDate=None):
+        """
+        Function that allow to download events from your google calendar
+        :param startDate: download from this date
+        :param endDate: downloadload to this date
+        :return: list of Events
+        """
         if startDate is None:
             startDate = datetime.datetime.utcnow() - datetime.timedelta(weeks=8)
         if endDate is None:
@@ -170,12 +226,13 @@ class Calendar:
             endDateRaw = endDate.isoformat() + 'Z'
         else:
             raise BaseException("Wrong date type {}".format(startDate))
-        eventsResult = self.service.events().list(calendarId=self.calid, timeMin=startDateRaw, timeMax=endDateRaw,
+        eventsResult = self.service.events().list(calendarId=self.cal_id, timeMin=startDateRaw, timeMax=endDateRaw,
                                                   singleEvents=True, orderBy='startTime', ).execute()
 
         rawEvents = eventsResult.get('items', [])
         events = []
 
+        # Format a list of dictionary to a list of Events
         for rawEvent in rawEvents:
             start = rawEvent['start'].get('dateTime', rawEvent['start'].get('date'))
             key = rawEvent['id']

@@ -31,6 +31,7 @@ class Ui_Dialog(object):
         self.StartTime_Label.setObjectName("StartTime_Label")
         self.horizontalLayout.addWidget(self.StartTime_Label)
         self.StartTime = QtWidgets.QDateEdit(self.verticalLayoutWidget)
+        self.StartTime.setDate(QDate.currentDate())
         self.StartTime.setObjectName("StartTime")
         self.horizontalLayout.addWidget(self.StartTime)
         self.verticalLayout.addLayout(self.horizontalLayout)

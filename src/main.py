@@ -15,11 +15,11 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QWidgetItem
 
 import parser
-from CalendarReader import Calendar, setCalId, Credentials, calidNotFoundException
-from MarkdownCreator import markdownCreator as md
+from calendar_reader import Calendar, set_cal_id, Credentials, calid_NotFoundException
+from markdown_creator import markdown_creator as md
 from hud import getStartEndTimes
 from hud import mainForm as mainForm
-from invoiceCreator import invoiceCreator
+from invoice_creator import invoice_creator
 
 base = os.path.abspath(__file__)
 base, null = os.path.split(base)
@@ -35,17 +35,17 @@ class getStartEndTime(QDialog):
         self.end = None
         self.start = None
 
-        self.gui.EndTime.dateChanged.connect(self.setEndTimeDate)
-        self.gui.StartTime.dateChanged.connect(self.setStartTimeDate)
+        self.gui.EndTime.dateChanged.connect(self._set_end_time_date)
+        self.gui.StartTime.dateChanged.connect(self._set_start_time_date)
         self.exec()
 
-    def setEndTimeDate(self, t):
+    def _set_end_time_date(self, t):
         self.end = datetime.combine(t.toPyDate(), datetime.min.time())
 
-    def setStartTimeDate(self, t):
+    def _set_start_time_date(self, t):
         self.start = datetime.combine(t.toPyDate(), datetime.min.time())
 
-    def getValors(self):
+    def get_valors(self):
         return self.start, self.end
 
 
@@ -58,18 +58,18 @@ class mainWindow(QMainWindow):
         self.gui.setupUi(self)
 
         # self.gui.actionUpdate.triggered.connect(self.eventLabelSet)
-        self.gui.actionUpdate.triggered.connect(self.gimmeYourTimes)
-        self.gui.actionChange_Calendar.triggered.connect(self.changeCalendar)
-        self.gui.pushButton.clicked.connect(self.getEventsCheckList)
+        self.gui.actionUpdate.triggered.connect(self.gimme_your_times)
+        self.gui.actionChange_Calendar.triggered.connect(self.change_calendar)
+        self.gui.pushButton.clicked.connect(self.get_events_check_list)
 
         # self.comboUtil = QComboBox(self)
 
-    def gimmeYourTimes(self):
+    def gimme_your_times(self):
         startEndDialog = getStartEndTime()
-        start, end = startEndDialog.getValors()
-        self.eventLabelSet(start, end)
+        start, end = startEndDialog.get_valors()
+        self.event_label_set(start, end)
 
-    def getEventsCheckList(self):
+    def get_events_check_list(self):
         """
         check all the checkboxes
         :return:
@@ -99,7 +99,7 @@ class mainWindow(QMainWindow):
         clientEvents = dict()
 
         for id in idChecked:
-            event = self.cal.getEventById(id)
+            event = self.cal.get_event_by_id(id)
             if event.client not in clientEvents.keys():
                 a = []
             else:
@@ -113,14 +113,14 @@ class mainWindow(QMainWindow):
         # going to change events into the calendar
         for client in clientEvents.keys():
             if False:
-                self.cal.payedEvents(clientEvents[client])
+                self.cal.pay_events(clientEvents[client])
                 # TODO: try it
 
             overview = md()
             overview.write(clientEvents[client])
-            tex = invoiceCreator(BASE_DIR, clientEvents[client], client)
+            tex = invoice_creator(BASE_DIR, clientEvents[client], client)
             try:
-                tex.write()
+                # tex.write()
                 tex.compiling()
             except Exception as E:
                 logging.error("Error {} while writing {} tex file".format(E, client))
@@ -137,7 +137,7 @@ class mainWindow(QMainWindow):
             label.setStyleSheet("QLabel { background-color : grey; color : black; }")
         return label
 
-    def changeCheckboxesStatus(self):
+    def change_checkboxes_status(self):
         for i in range(0, self.gui.scrollLayout.count()):
             scrollItem = self.gui.scrollLayout.itemAt(i)
             if type(scrollItem) is QHBoxLayout:
@@ -151,40 +151,40 @@ class mainWindow(QMainWindow):
                             else:
                                 itemWidget.setChecked(1)
 
-    def changeCalendar(self):
+    def change_calendar(self):
         path = os.path.join(BASE_DIR, "Configuration.ini")
-        data = parser.getDict(path)
+        data = parser.get_dict(path)
         elem = data["Calendar"]
         elem["calid"] = "none"
         data["Calendar"] = elem
-        parser.writedata(data, path)
+        parser.write_data(data, path)
         self.cal = None
 
-        self.gimmeYourTimes()
+        self.gimme_your_times()
 
-    def calInitializer(self):
+    def call_initializer(self):
 
         credentials = Credentials(BASE_DIR)
 
         # I'm going to create calendar using "calid" into the config file
         while self.cal is None:
             try:
-                self.cal = Calendar(BASE_DIR, credentials.getService())
-            except calidNotFoundException as c:
+                self.cal = Calendar(BASE_DIR, credentials.get_service())
+            except calid_NotFoundException as c:
                 logging.debug(c)
-                setCalId(BASE_DIR, credentials.getService())
+                set_cal_id(BASE_DIR, credentials.get_service())
 
-    def eventLabelSet(self, startDate, endDate):  # TODO: a better style
+    def event_label_set(self, startDate, endDate):  # TODO: a better style
         """
         set the event list
         :return:
         """
         if self.cal is None:
-            self.calInitializer()
-        self.cal.fill(startDate, endDate)
-        self.gui.checboxesController.clicked.connect(self.changeCheckboxesStatus)
+            self.call_initializer()
+        self.cal.download_events(startDate, endDate)
+        self.gui.checboxesController.clicked.connect(self.change_checkboxes_status)
 
-        events = self.cal.getEvents()
+        events = self.cal.get_events()
         # self.gui.scrollLayout.removeItem() #TODO: blank the event visualized
         for event in events:
             horizontalLayout = QtWidgets.QHBoxLayout()

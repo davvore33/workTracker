@@ -12,7 +12,7 @@ class calendarDb(Database):
     def __init__(self, path):
 
         configPath = path + "/Configuration.ini"
-        data = parser.getList(configPath, "Database")
+        data = parser.get_list(configPath, "Database")
 
         'If you give a correct configuration i\'load that from your file'
 

@@ -1,7 +1,7 @@
 import configparser
 
 
-def getDict(path, Section = None):
+def get_dict(path, Section = None):
     '''
     :param path: path of your configuration, usually into your project directory
     :param Section: sectionf of the documentation that you want to read
@@ -22,7 +22,7 @@ def getDict(path, Section = None):
         return data
 
 
-def getList(path, Section):
+def get_list(path, Section):
     '''
     :param path: path of your configuration, usually into your project directory
     :param Section: sectionf of the documentation that you want to read
@@ -36,7 +36,7 @@ def getList(path, Section):
     raise BaseException("Error")
 
 
-def writedata(data, path):
+def write_data(data, path):
     parser = configparser.ConfigParser()
     for elem in data.keys():
         dato = data[elem]

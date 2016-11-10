@@ -1,4 +1,4 @@
-class markdownCreator:
+class markdown_creator:
         def write(self,args):
             mdfile = open('bill.md','w')
             for event in args:

@@ -1,7 +1,7 @@
 import datetime
 
 
-class datasheetcreator:
+class spreadsheet_creator:
     def __init__(self, path, fileName):
         if path is not None:
             self.__path__ = path
@@ -17,16 +17,16 @@ class datasheetcreator:
         else:
             raise IOError('What have you done?')
 
-    def readcsv(self):
+    def read_csv(self):
         with open(self.__path__, 'rb') as csvfile:
             spamreader = csvfile.read()
             print(spamreader)
 
-    def writecsvdata(self, invoiceNumber, date, howmuch):
+    def write_csv_data(self, invoiceNumber, date, howmuch):
         with open(self.__path__ + "/" + self.__fileName__, 'w', newline='') as csvfile:
             csvfile.write("{},{},{}\n".format(invoiceNumber, date, howmuch))
 
-    def writeappendcsv(self, data):
+    def write_append_csv(self, data):
         if type(data) is dict:
             with open(self.__path__ + "/" + self.__fileName__, 'wa', newline='') as csvfile:
                 csvfile.write("{},{},{}\n".format(data.get('invoiceNumber'), data.get('date'),
