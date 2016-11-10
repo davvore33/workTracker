@@ -1,0 +1,13 @@
+machine:
+  post:
+    - pyenv global 3.4.2
+dependencies:
+  pre:
+    - sudo apt-get update; sudo apt-get install pandoc
+tests:
+#  pre:
+#    - echo 0
+  override:
+    - echo 0
+#  post:
+#    - echo 0

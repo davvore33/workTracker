@@ -1,7 +1,4 @@
-import logging
-from datetime import datetime
 from pypandoc import convert_text as convert
-import os
 
 import parser
 
