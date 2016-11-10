@@ -4,7 +4,7 @@ machine:
 dependencies:
   pre:
     - sudo apt-get update; sudo apt-get install pandoc
-tests:
+test:
 #  pre:
 #    - echo 0
   override:
