@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import getopt
 import logging
 import os
 import sys
@@ -126,6 +126,13 @@ class mainWindow(QMainWindow):
                 logging.error("Error {} while writing {} tex file".format(E, client))
 
     def _getNewLabel(self, text, status, name=None):
+        """
+        allow to get
+        :param text:
+        :param status:
+        :param name:
+        :return:
+        """
         label = QLabel(self.gui.scrollAreaWidgetContents)
         label.setText(str(text))
         label.setObjectName(name)
@@ -138,6 +145,10 @@ class mainWindow(QMainWindow):
         return label
 
     def change_checkboxes_status(self):
+        """
+        usefull for set all the checkboxes using only one checkbox
+        :return:
+        """
         for i in range(0, self.gui.scrollLayout.count()):
             scrollItem = self.gui.scrollLayout.itemAt(i)
             if type(scrollItem) is QHBoxLayout:
@@ -152,6 +163,10 @@ class mainWindow(QMainWindow):
                                 itemWidget.setChecked(1)
 
     def change_calendar(self):
+        """
+        Blanck the calid entry in your configuration
+        :return:
+        """
         path = os.path.join(BASE_DIR, "Configuration.ini")
         data = parser.get_dict(path)
         elem = data["Calendar"]
@@ -163,7 +178,10 @@ class mainWindow(QMainWindow):
         self.gimme_your_times()
 
     def call_initializer(self):
-
+        """
+        initialize the calendart struct
+        :return:
+        """
         credentials = Credentials(BASE_DIR)
 
         # I'm going to create calendar using "calid" into the config file
@@ -204,13 +222,13 @@ class mainWindow(QMainWindow):
             horizontalLayout.addWidget(checkBox)
 
             label = self._getNewLabel(event.client, "payed" if event.payed else "not payed",
-                                     "checkBox_{}".format(event.key))
+                                      "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
             label = self._getNewLabel(event.duration, "payed" if event.payed else "not payed",
-                                     "checkBox_{}".format(event.key))
+                                      "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
             label = self._getNewLabel(event.date, "payed" if event.payed else "not payed",
-                                     "checkBox_{}".format(event.key))
+                                      "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
 
             self.gui.scrollLayout.addLayout(horizontalLayout)
@@ -219,7 +237,16 @@ class mainWindow(QMainWindow):
         self.gui.scrollLayout.addItem(spacerItem)
 
 
-def main():
+def main(argv=sys.argv):
+    opts, args = getopt.getopt(argv[1:], 'g:', ['loglevel='])
+    for opt, arg in opts:
+        if opt in ('-g', '--loglevel'):
+            if str(arg).upper() == 'debug'.upper():
+                logging.basicConfig(format='[%(asctime)s] %(levelname)s:%(message)s', level=logging.DEBUG)
+            if str(arg).upper() == 'info'.upper():
+                logging.basicConfig(format='[%(asctime)s] %(levelname)s:%(message)s', level=logging.INFO)
+        else:
+            logging.basicConfig(format='[%(asctime)s] %(levelname)s:%(message)s')
     app = QApplication(sys.argv)
     intro = mainWindow()
     intro.show()

@@ -260,4 +260,4 @@ class Calendar:
                                description=description,
                                duration=duration, payed=True, key=key)
             events.append(event)
-        return events
+        self.events = events
