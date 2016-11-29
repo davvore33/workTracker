@@ -13,7 +13,7 @@ class Events(object):
         self.description = description
         self.client = client
         self.payed = payed
-        if key == None:
+        if key is None:
             return Exception
         else:
             self.key = key

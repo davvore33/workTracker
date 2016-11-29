@@ -6,12 +6,19 @@ import sys
 from datetime import datetime
 
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QRect
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QCalendarWidget
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QWidgetItem
 
 import parser
@@ -47,6 +54,38 @@ class getStartEndTime(QDialog):
 
     def get_valors(self):
         return self.start, self.end
+
+
+class date_popup(QDialog):
+    def __init__(self):
+        super(Qt.Popup, self).__init__()
+        self.setSizeGripEnabled(False)
+        self.resize(260, 230)
+        self.widget = QWidget(self)
+        self.widget.setObjectName(QtCore.QString.fromUtf8("self.widget"))
+        self.widget.setGeometry(QRect(0, 10, 258, 215))
+
+        self.verticalLayout = QVBoxLayout(self.widget)
+        self.verticalLayout.setObjectName(QtCore.QString.fromUtf8("self.verticalLayout"))
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.calendarWidget = QCalendarWidget(self.widget)
+        self.calendarWidget.setObjectName(QtCore.QString.fromUtf8("calendarWidget"))
+
+        self.verticalLayout.addWidget(self.calendarWidget)
+
+        self.buttonBox = QDialogButtonBox(self.widget)
+        self.buttonBox.setObjectName(QtCore.QString.fromUtf8("self.buttonBox"))
+        self.buttonBox.setOrientation(Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
+
+        self.verticalLayout.addWidget(self.buttonBox)
+
+        QObject.self.buttonBox.accepted.connect(self.accept)
+        QObject.self.buttonBox.rejected.connect(self.reject)
+
+    def selectedDate(self):
+        return self.calendarWidget.selectedDate()
 
 
 class mainWindow(QMainWindow):

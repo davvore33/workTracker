@@ -189,6 +189,7 @@ class Calendar:
         :return:
         """
         for event in events:
+            patch = {'colorId': "11"}
             patch = {'summary': "[ payed ] " + event.client}
             self._patchEvent(event.key, patch)
 
@@ -251,13 +252,15 @@ class Calendar:
                 logging.debug("{} \\ while catching description from {}".format(E, key))
                 description = None
                 pass
-            if "[ payed ]" not in rawEvent['summary']:
-                event = Events(date=start.Date(), client=rawEvent['summary'].rstrip(" "), description=description,
-                               duration=duration,
-                               payed=False, key=key)
+            if 'colorId' in rawEvent:
+                if '11' in rawEvent['colorId']:
+                    event = Events(date=start.Date(), client=rawEvent['summary'].rstrip(" "),
+                                   description=description,
+                                   duration=duration,
+                                   payed=True, key=key)
             else:
                 event = Events(date=start.Date(), client=rawEvent['summary'].lstrip("[ payed ]").rstrip(" "),
                                description=description,
-                               duration=duration, payed=True, key=key)
+                               duration=duration, payed=False, key=key)
             events.append(event)
         self.events = events

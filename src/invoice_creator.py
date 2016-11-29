@@ -42,6 +42,12 @@ def _read_model(model_path):
     return rawTex.split("\n")
 
 
+def _description_appender(events):
+    description = str()
+    for event in events:
+        description = str(event.description)
+
+
 def _load_args(clientsPath, invoiceClient):
     """
     Private function that allow to read the client dictionary args

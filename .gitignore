@@ -17,3 +17,5 @@ src/dbAccess/__pycache__/
 db/
 invoice/
 /Configuration.ini
+src/changeRef.py
+src/hud/__pycache__/
