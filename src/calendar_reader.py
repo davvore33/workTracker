@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import datetime
 import logging
 import os
@@ -19,20 +17,20 @@ from hud import getCalIdForm as getCalUiForm
 
 
 # Exception loaded when there's no calid into the config
-class calid_NotFoundException(BaseException):
+class CalidNotfoundexception(BaseException):
     def __init__(self, args):
-        super()
+        super(self)
         logging.error(args)
 
 
-class set_cal_id(QDialog):
+class SetCalId(QDialog):
     def __init__(self, configPath, service):
         """
         calid set constructor
         :param configPath:
         :param service:
         """
-        super(set_cal_id, self).__init__()
+        super(SetCalId, self).__init__(flags=None)
         self.gui = getCalUiForm.Ui_Dialog()
         self.gui.setupUi(self)
         self.configPath = configPath
@@ -43,10 +41,10 @@ class set_cal_id(QDialog):
                 radioButton.setText(i['summary'])
                 radioButton.setObjectName("Radiobutton_" + i['id'])
                 self.gui.verticalLayout.addWidget(radioButton)
+                logging.debug("added {} item".format(i))
         ok, canc = self.gui.buttonBox.buttons()
         ok.clicked.connect(self._get_checked_calid)
         self.exec()
-        logging.debug("added {} item".format(i))
 
     def _get_checked_calid(self):
         """
@@ -88,9 +86,12 @@ class Credentials:
         """
         self.baseDir = baseDir
         self.credentialDir = self.baseDir + "/credentials"
+        if not os.path.exists(self.credentialDir):
+            os.makedirs(self.credentialDir)
         self.clientSecretFile = self.credentialDir + '/client_secret.json'  # string, File name of client secrets.
         self.clientScope = "https://accounts.google.com/o/oauth2/v2/auth"
-        self.userScope = 'https://www.googleapis.com/auth/calendar'  # string or iterable of strings, scope(s) to request.
+        self.userScope = 'https://www.googleapis.com/auth/calendar'
+        # string or iterable of strings, scope(s) to request.
         self.userSecretFile = self.credentialDir + 'user_secret.json'
         self.applicationName = 'workTracker'
 
@@ -165,7 +166,7 @@ class Calendar:
                 return event
         raise BaseException("this id doesn't exists")
 
-    def _patchEvent(self, key, patch):
+    def _patch_event(self, key, patch):
         """
         Private function that allot to modify events
         :param key: event to patch
@@ -190,8 +191,8 @@ class Calendar:
         """
         for event in events:
             patch = {'colorId': "11"}
-            patch = {'summary': "[ payed ] " + event.client}
-            self._patchEvent(event.key, patch)
+            # patch = {'summary': "[ payed ] " + event.client} old way
+            self._patch_event(event.key, patch)
 
     @staticmethod
     def _conf_loading(configPath):
@@ -209,7 +210,7 @@ class Calendar:
             for i in data:
                 if i[0].upper() == 'calid'.upper() and i[1].upper() != "none".upper():
                     return i[1]
-            raise calid_NotFoundException("calid not found in {}".format(configPath))
+            raise CalidNotfoundexception("calid not found in {}".format(configPath))
 
     def download_events(self, startDate=None, endDate=None):
         """
@@ -235,6 +236,7 @@ class Calendar:
 
         # Format a list of dictionary to a list of Events
         for rawEvent in rawEvents:
+            event = None
             start = rawEvent['start'].get('dateTime', rawEvent['start'].get('date'))
             key = rawEvent['id']
             try:

@@ -14,6 +14,6 @@ class Events(object):
         self.client = client
         self.payed = payed
         if key is None:
-            return Exception
+            raise BaseException("can't give to me a none key")
         else:
             self.key = key

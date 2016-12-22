@@ -22,11 +22,11 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QWidgetItem
 
 import parser
-from calendar_reader import Calendar, set_cal_id, Credentials, calid_NotFoundException
+from calendar_reader import Calendar, SetCalId, Credentials, CalidNotfoundexception
 from markdown_creator import markdown_creator as md
 from hud import getStartEndTimes
 from hud import mainForm as mainForm
-from invoice_creator import invoice_creator
+from invoicecreator import InvoiceCreator
 
 base = os.path.abspath(__file__)
 base, null = os.path.split(base)
@@ -56,7 +56,7 @@ class getStartEndTime(QDialog):
         return self.start, self.end
 
 
-class date_popup(QDialog):
+class DatePopup(QDialog):
     def __init__(self):
         super(Qt.Popup, self).__init__()
         self.setSizeGripEnabled(False)
@@ -84,13 +84,13 @@ class date_popup(QDialog):
         QObject.self.buttonBox.accepted.connect(self.accept)
         QObject.self.buttonBox.rejected.connect(self.reject)
 
-    def selectedDate(self):
+    def selected_date(self):
         return self.calendarWidget.selectedDate()
 
 
-class mainWindow(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self):
-        super(mainWindow, self).__init__()
+        super(MainWindow, self).__init__()
 
         self.cal = None
         self.gui = mainForm.Ui_MainWindow()
@@ -151,20 +151,18 @@ class mainWindow(QMainWindow):
 
         # going to change events into the calendar
         for client in clientEvents.keys():
-            if False:
-                self.cal.pay_events(clientEvents[client])
-                # TODO: try it
+            self.cal.pay_events(clientEvents[client])
 
             overview = md()
             overview.write(clientEvents[client])
-            tex = invoice_creator(BASE_DIR, clientEvents[client], client)
+            tex = InvoiceCreator(BASE_DIR, clientEvents[client], client)
             try:
                 # tex.write()
-                tex.compiling()
+                tex.compiling(tex.invoicesPath) #usefull for change variable
             except Exception as E:
                 logging.error("Error {} while writing {} tex file".format(E, client))
 
-    def _getNewLabel(self, text, status, name=None):
+    def _get_new_label(self, text, status, name=None):
         """
         allow to get
         :param text:
@@ -227,9 +225,9 @@ class mainWindow(QMainWindow):
         while self.cal is None:
             try:
                 self.cal = Calendar(BASE_DIR, credentials.get_service())
-            except calid_NotFoundException as c:
+            except CalidNotfoundexception as c:
                 logging.debug(c)
-                set_cal_id(BASE_DIR, credentials.get_service())
+                SetCalId(BASE_DIR, credentials.get_service())
 
     def event_label_set(self, startDate, endDate):  # TODO: a better style
         """
@@ -260,13 +258,13 @@ class mainWindow(QMainWindow):
 
             horizontalLayout.addWidget(checkBox)
 
-            label = self._getNewLabel(event.client, "payed" if event.payed else "not payed",
+            label = self._get_new_label(event.client, "payed" if event.payed else "not payed",
                                       "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
-            label = self._getNewLabel(event.duration, "payed" if event.payed else "not payed",
+            label = self._get_new_label(event.duration, "payed" if event.payed else "not payed",
                                       "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
-            label = self._getNewLabel(event.date, "payed" if event.payed else "not payed",
+            label = self._get_new_label(event.date, "payed" if event.payed else "not payed",
                                       "checkBox_{}".format(event.key))
             horizontalLayout.addWidget(label)
 
@@ -287,7 +285,7 @@ def main(argv=sys.argv):
         else:
             logging.basicConfig(format='[%(asctime)s] %(levelname)s:%(message)s')
     app = QApplication(sys.argv)
-    intro = mainWindow()
+    intro = MainWindow()
     intro.show()
     sys.exit(app.exec_())
 

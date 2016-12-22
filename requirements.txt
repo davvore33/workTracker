@@ -1,3 +1,5 @@
+plasTeX
+apiclient
 pypandoc
 DateTime==4.1.1
 httplib2==0.9.2
